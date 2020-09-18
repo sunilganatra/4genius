@@ -1,5 +1,5 @@
 # 4genius
-Ravi
-Dheeraj
-Sepi
-Kai
+- Ravi
+- Dheeraj
+- Sepi
+- Kai
