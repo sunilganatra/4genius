@@ -1,0 +1,62 @@
+https://cp4d-cpd-cp4d.pathfinder-royalbankofc-73aebe06726e634c608c4167edcc2aeb-0000.tor01.containers.appdomain.cloud
+curl -i  -k -X GET  https://cp4d-cpd-cp4d.pathfinder-royalbankofc-73aebe06726e634c608c4167edcc2aeb-0000.tor01.containers.appdomain.cloud/v1/preauth/validateAuth   -H 'password:rbccp4d-rbccp4d'  -H 'username:admin'
+{"username":"admin","role":"Admin","permissions":["access_catalog","administrator","can_provision","manage_catalog","manage_information_assets","manage_quality","manage_discovery","manage_metadata_import","manage_categories","author_governance_artifacts","manage_governance_workflow"],"sub":"admin","iss":"KNOXSSO","aud":"DSX","uid":"1000330999","authenticator":"default","accessToken":"eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6IkFkbWluIiwicGVybWlzc2lvbnMiOlsiYWNjZXNzX2NhdGFsb2ciLCJhZG1pbmlzdHJhdG9yIiwiY2FuX3Byb3Zpc2lvbiIsIm1hbmFnZV9jYXRhbG9nIiwibWFuYWdlX2luZm9ybWF0aW9uX2Fzc2V0cyIsIm1hbmFnZV9xdWFsaXR5IiwibWFuYWdlX2Rpc2NvdmVyeSIsIm1hbmFnZV9tZXRhZGF0YV9pbXBvcnQiLCJtYW5hZ2VfY2F0ZWdvcmllcyIsImF1dGhvcl9nb3Zlcm5hbmNlX2FydGlmYWN0cyIsIm1hbmFnZV9nb3Zlcm5hbmNlX3dvcmtmbG93Il0sInN1YiI6ImFkbWluIiwiaXNzIjoiS05PWFNTTyIsImF1ZCI6IkRTWCIsInVpZCI6IjEwMDAzMzA5OTkiLCJhdXRoZW50aWNhdG9yIjoiZGVmYXVsdCIsImlhdCI6MTU5OTg0OTgyNiwiZXhwIjoxNTk5ODkyOTkwfQ.Y4xWfs7aZw8Ry-3OByaZ-P_v0is-AIOFQfakDDa0A6PSkAbZLxyshdr9QEkVEQz2QhOzPUNKO5eiQ1-4xl0TyPjUjnahi4j2bDkAG_h3ZGuJuIlUYDjDEwg6kDpb6IFF3-t-fuWjVDOvyBWGKIZL73PVGEBSUX_k3EpgQevNoaS-j5DlxWxOYVIniR8D7U_rFeBlLnGOgZfOKNfFdIhQqDX8YOHTMDcwE2N-7xunTNOXxFQ5uuIVUo21AVDFU_xQJuNuUkUD85SMrIsZfeQv_OIS679pvXWJBMh2t0zcNjvQ2tdypeQC77966SZFe2owdY9QBdgCPkGIw8U8ccDXfg","_messageCode_":"success","message":"success"}Dheerajs-MacBook-Pro:test dheeraj.arremsetty@ibm.com$ 
+curl -vk -iv -X POST "https://cp4d-cpd-cp4d.pathfinder-royalbankofc-73aebe06726e634c608c4167edcc2aeb-0000.tor01.containers.appdomain.cloud/zen-data/v2/serviceInstance" -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json'  -d '{
+    "createArguments": {
+        "metadata": {
+            "storageClass": "ibmc-file-gold-gid",
+            "storageSize": "20Gi"
+        },
+        "resources": {},
+        "serviceInstanceDescription": "volume 1"
+    },
+    "preExistingOwner": false,
+    "serviceInstanceDisplayName": "appvol",
+    "serviceInstanceType": "volumes",
+    "serviceInstanceVersion": "-",
+    "transientFields": {}
+}'
+curl -v -ik -X POST 'https://cp4d-cpd-cp4d.pathfinder-royalbankofc-73aebe06726e634c608c4167edcc2aeb-0000.tor01.containers.appdomain.cloud/zen-data/v1/volumes/volume_services/appvol' -H "Authorization: Bearer $TOKEN" -d '{}' -H 'Content-Type: application/json' -H 'cache-control: no-cache'
+curl -v -ik  -X PUT 'https://cp4d-cpd-cp4d.pathfinder-royalbankofc-73aebe06726e634c608c4167edcc2aeb-0000.tor01.containers.appdomain.cloud/zen-volumes/appvol/v1/volumes/files/python%2Fapp%2FSparkify.py'  -H "Authorization: Bearer $TOKEN"   -H 'cache-control: no-cache' -H 'content-type: multipart/form-data' -F 'upFile=@/Users/dheeraj.arremsetty@ibm.com/Downloads/Sparkify.py'
+curl -v -i -X DELETE 'https://cp4d-cpd-cp4d.pathfinder-royalbankofc-73aebe06726e634c608c4167edcc2aeb-0000.tor01.containers.appdomain.cloud/zen-data/v1/volumes/volume_services/appvol' -H "Authorization: Bearer $TOKEN"
+curl -ivk -X POST -d @/Users/dheeraj.arremsetty@ibm.com/Downloads/sparkifyJob.json -H "jwt-auth-user-payload: $JTOKEN" https://cp4d-cpd-cp4d.pathfinder-royalbankofc-73aebe06726e634c608c4167edcc2aeb-0000.tor01.containers.appdomain.cloud/ae/spark/v2/1386d43d77d84ec9ab513ef31ec2e6c3/v2/jobs
+curl -ivk -X POST -d @sparkifyJob.json -H "jwt-auth-user-payload: $JTOKEN" https://cp4d-cpd-cp4d.pathfinder-royalbankofc-73aebe06726e634c608c4167edcc2aeb-0000.tor01.containers.appdomain.cloud/ae/spark/v2/1386d43d77d84ec9ab513ef31ec2e6c3/v2/jobs
+curl -ik -X GET -H "jwt-auth-user-payload: $JTOKEN" https://cp4d-cpd-cp4d.pathfinder-royalbankofc-73aebe06726e634c608c4167edcc2aeb-0000.tor01.containers.appdomain.cloud/ae/spark/v2/1386d43d77d84ec9ab513ef31ec2e6c3/v2/jobs/506d397a-c8c1-47a9-9610-69a38bbf0947
+curl -ivk -X POST https://cp4d-cpd-cp4d.pathfinder-royalbankofc-73aebe06726e634c608c4167edcc2aeb-0000.tor01.containers.appdomain.cloud/ae/spark/v2/<instance_id>/history-server -H "jwt-auth-user-payload: $JTOKEN"
+curl -ivk -X POST https://cp4d-cpd-cp4d.pathfinder-royalbankofc-73aebe06726e634c608c4167edcc2aeb-0000.tor01.containers.appdomain.cloud/ae/spark/v2/1386d43d77d84ec9ab513ef31ec2e6c3/history-server -H "jwt-auth-user-payload: $JTOKEN"
+curl -v -ik  -X PUT 'https://cp4d-cpd-cp4d.pathfinder-royalbankofc-73aebe06726e634c608c4167edcc2aeb-0000.tor01.containers.appdomain.cloud/zen-volumes/appvol/v1/volumes/files/customApps%2Fexample.py'  -H "Authorization: Bearer $TOKEN"   -H 'cache-control: no-cache' -H 'content-type: multipart/form-data' -F 'upFile=@Sparkify.py'
+curl -ivk -X POST -d @sparkifyJob.json -H "jwt-auth-user-payload: $JTOKEN" https://cp4d-cpd-cp4d.pathfinder-royalbankofc-73aebe06726e634c608c4167edcc2aeb-0000.tor01.containers.appdomain.cloud/ae/spark/v2/1386d43d77d84ec9ab513ef31ec2e6c3/v2/jobs
+curl -v -ik  -X PUT 'https://cp4d-cpd-cp4d.pathfinder-royalbankofc-73aebe06726e634c608c4167edcc2aeb-0000.tor01.containers.appdomain.cloud/zen-volumes/appvol/v1/volumes/files/customApps%2Fexample.py'  -H "Authorization: Bearer $TOKEN"   -H 'cache-control: no-cache' -H 'content-type: multipart/form-data' -F 'upFile=@Sparkify.py'
+STEPS:
+Upload test file in .csv format
+curl -v -ik  -X PUT 'https://cp4d-cpd-cp4d.pathfinder-royalbankofc-73aebe06726e634c608c4167edcc2aeb-0000.tor01.containers.appdomain.cloud/zen-volumes/appvol/v1/volumes/files/customApps%2Firish_test_1.csv'  -H "Authorization: Bearer $TOKEN"   -H 'cache-control: no-cache' -H 'content-type: multipart/form-data' -F 'upFile=@irish_test_1.csv'
+uploading spark job
+curl -v -ik  -X PUT 'https://cp4d-cpd-cp4d.pathfinder-royalbankofc-73aebe06726e634c608c4167edcc2aeb-0000.tor01.containers.appdomain.cloud/zen-volumes/appvol/v1/volumes/files/customApps%2FSparkify.py'  -H "Authorization: Bearer $TOKEN"   -H 'cache-control: no-cache' -H 'content-type: multipart/form-data' -F 'upFile=@Sparkify.py'
+curl -v -ik  -X PUT 'https://cp4d-cpd-cp4d.pathfinder-royalbankofc-73aebe06726e634c608c4167edcc2aeb-0000.tor01.containers.appdomain.cloud/zen-volumes/appvol/v1/volumes/files/customApps%2Fspark_cos.py'  -H "Authorization: Bearer $TOKEN"   -H 'cache-control: no-cache' -H 'content-type: multipart/form-data' -F 'upFile=@spark_cos.py'
+submit the spark job
+curl -ivk -X POST -d @sparkifyJob.json -H "jwt-auth-user-payload: $JTOKEN" https://cp4d-cpd-cp4d.pathfinder-royalbankofc-73aebe06726e634c608c4167edcc2aeb-0000.tor01.containers.appdomain.cloud/ae/spark/v2/1386d43d77d84ec9ab513ef31ec2e6c3/v2/jobs
+curl -ivk -X POST -d @spark_cos.json -H "jwt-auth-user-payload: $JTOKEN" https://cp4d-cpd-cp4d.pathfinder-royalbankofc-73aebe06726e634c608c4167edcc2aeb-0000.tor01.containers.appdomain.cloud/ae/spark/v2/1386d43d77d84ec9ab513ef31ec2e6c3/v2/jobs
+status of the job
+curl -ivk -X GET -d @sparkifyJob.json -H "jwt-auth-user-payload: $JTOKEN" https://cp4d-cpd-cp4d.pathfinder-royalbankofc-73aebe06726e634c608c4167edcc2aeb-0000.tor01.containers.appdomain.cloud/ae/spark/v2/1386d43d77d84ec9ab513ef31ec2e6c3/v2/jobs/9c4c33c8-d274-47ab-a1e3-47edb79ceda1
+Get status of all the jobs
+curl -ivk -X GET -d @sparkifyJob.json -H "jwt-auth-user-payload: $JTOKEN" https://cp4d-cpd-cp4d.pathfinder-royalbankofc-73aebe06726e634c608c4167edcc2aeb-0000.tor01.containers.appdomain.cloud/ae/spark/v2/1386d43d77d84ec9ab513ef31ec2e6c3/v2/jobs/
+Display content of files
+curl   -X GET 'https://cp4d-cpd-cp4d.pathfinder-royalbankofc-73aebe06726e634c608c4167edcc2aeb-0000.tor01.containers.appdomain.cloud/zen-volumes/appvol/v1/volumes/files/customApps%2Firish_test_1.csv'  -H "Authorization: Bearer $TOKEN"   -H 'cache-control: no-cache'
+curl -v -ik  -X GET 'https://cp4d-cpd-cp4d.pathfinder-royalbankofc-73aebe06726e634c608c4167edcc2aeb-0000.tor01.containers.appdomain.cloud/zen-volumes/appvol/v1/volumes/files/customApps%2FSparkify.py'  -H "Authorization: Bearer $TOKEN"   -H 'cache-control: no-cache'
+curl -ivk -X POST -d @cos.json -H "jwt-auth-user-payload: $JTOKEN" https://cp4d-cpd-cp4d.pathfinder-royalbankofc-73aebe06726e634c608c4167edcc2aeb-0000.tor01.containers.appdomain.cloud/ae/spark/v2/1386d43d77d84ec9ab513ef31ec2e6c3/v2/jobs
+Delete the file
+curl -ik  -X DELETE 'https://cp4d-cpd-cp4d.pathfinder-royalbankofc-73aebe06726e634c608c4167edcc2aeb-0000.tor01.containers.appdomain.cloud/zen-volumes/appvol/v1/volumes/files/customApps%2FSparkify.py'  -H "Authorization: Bearer $TOKEN"   -H 'cache-control: no-cache' -H 'content-type: multipart/form-data'
+curl -ik  -X DELETE 'https://cp4d-cpd-cp4d.pathfinder-royalbankofc-73aebe06726e634c608c4167edcc2aeb-0000.tor01.containers.appdomain.cloud/zen-volumes/appvol/v1/volumes/files/customApps%2FSparkify_2.py'  -H "Authorization: Bearer $TOKEN"   -H 'cache-control: no-cache' -H 'content-type: multipart/form-data'
+increase quota
+curl -iX PUT -d '{ "cpu_quota":200,"memory_quota":"1000g"}' -ivk -H "Content-Type: application/json" -H "jwt-auth-user-payload: $JTOKEN" https://cp4d-cpd-cp4d.pathfinder-royalbankofc-73aebe06726e634c608c4167edcc2aeb-0000.tor01.containers.appdomain.cloud/ae/spark/v2/1386d43d77d84ec9ab513ef31ec2e6c3/resource_quota
+https://cp4d-cpd-cp4d.pathfinder-royalbankofc-73aebe06726e634c608c4167edcc2aeb-0000.tor01.containers.appdomain.cloud
+1386d43d77d84ec9ab513ef31ec2e6c3
+get quota
+curl -iX GET -ivk -H "Content-Type: application/json" -H "jwt-auth-user-payload: $JTOKEN" https://cp4d-cpd-cp4d.pathfinder-royalbankofc-73aebe06726e634c608c4167edcc2aeb-0000.tor01.containers.appdomain.cloud/ae/spark/v2/1386d43d77d84ec9ab513ef31ec2e6c3
+download logs
+curl -i -X GET 'https://<CloudPakforData_URL>/zen-volumes/<INSTANCE_VOLUME_NAME>/v1/volumes/files/<YOUR_INSTANCE_ID>%2F<YOUR_JOB_ID>%2Flogs%2Fspark-driver-<YOUR_JOB_ID>-stdout' -H "Authorization: Bearer <ACCESS_TOKEN>" -H 'cache-control: no-cache' -o spark-driver-<YOUR_JOB_ID>-stdout 
+curl -i -X GET 'https://cp4d-cpd-cp4d.pathfinder-royalbankofc-73aebe06726e634c608c4167edcc2aeb-0000.tor01.containers.appdomain.cloud/zen-volumes/rbcvol/v1/volumes/files/1386d43d77d84ec9ab513ef31ec2e6c3%2F<YOUR_JOB_ID>%2Flogs%2Fspark-driver-<YOUR_JOB_ID>-stdout' -H "Authorization: Bearer $TOKEN" -H 'cache-control: no-cache' -o spark-driver-<YOUR_JOB_ID>-stdout
+3da2db40-d6fa-46f0-a150-b7d3c0e312f7 (16 num of workers)
+curl -i -X GET 'https://cp4d-cpd-cp4d.pathfinder-royalbankofc-73aebe06726e634c608c4167edcc2aeb-0000.tor01.containers.appdomain.cloud/zen-volumes/rbcvol/v1/volumes/files/1386d43d77d84ec9ab513ef31ec2e6c3%2F3da2db40-d6fa-46f0-a150-b7d3c0e312f7%2Flogs%2Fspark-driver-3da2db40-d6fa-46f0-a150-b7d3c0e312f7-stdout' -H "Authorization: Bearer $TOKEN" -H 'cache-control: no-cache' -o spark-driver-3da2db40-d6fa-46f0-a150-b7d3c0e312f7-stdout
+curl -i -X GET 'https://cp4d-cpd-cp4d.pathfinder-royalbankofc-73aebe06726e634c608c4167edcc2aeb-0000.tor01.containers.appdomain.cloud/zen-volumes/rbcvol/v1/volumes/files/1386d43d77d84ec9ab513ef31ec2e6c3%2F3d1cc924-6fdd-406a-b492-f71d2c8a0309%2Flogs%2Fspark-driver-3d1cc924-6fdd-406a-b492-f71d2c8a0309-stdout' -H "Authorization: Bearer $TOKEN" -H 'cache-control: no-cache' -o spark-driver-3d1cc924-6fdd-406a-b492-f71d2c8a0309-stdout
+rl -i -X GET 'https://cp4d-cpd-cp4d.pathfinder-royalbankofc-73aebe06726e634c608c4167edcc2aeb-0000.tor01.containers.appdomain.cloud/zen-volumes/rbcvol/v1/volumes/files/1386d43d77d84ec9ab513ef31ec2e6c3%2Fc55d06ce-df9d-413a-ab2a-1bec5797f4b9%2Flogs%2Fspark-driver-c55d06ce-df9d-413a-ab2a-1bec5797f4b9-stdout' -H "Authorization: Bearer $TOKEN" -H 'cache-control: no-cache' -o spark-driver-c55d06ce-df9d-413a-ab2a-1bec5797f4b9-stdout 
