@@ -47,54 +47,7 @@ class AnalyticsEngineClient():
         # debug info
         if verbose:
             print('Initialize Cloud Pak For Data: sucessfully!')
-    
-    def get_asset_types(self):
-        """
-        @param::none
-        return all the asset type of specified knowledge catalog
-        """ 
-        method = '/v2/asset_types?catalog_id=%s'%(self.catalog_id)
-        data = self.__GET__(method)
-        resources = self.__jsonify__(data)['resources']
-        return [t['name'] for t in resources]
-    
-    def search_assets(self, type_name='feature_asset'):
-        """
-        @param string::type_name: the type name of asset in catalog
-        return all asset metadata document match the asset type
-        """
-        if type_name == None:
-            raise Exception('The asset type name is required.')
-            
-        method = '/v2/asset_types/%s/search?catalog_id=%s'%(type_name,self.catalog_id)
-        payloads = "{\"query\":\"*:*\"}"
-        data = self.__POST__(method, payloads)
-        #return self.__jsonify__(data)
-        return {entity['metadata']['asset_id']:entity['metadata']['name'] for entity in self.__jsonify__(data)['results']}
-    
-    def create_asset(self, metadata):
-        """
-        @param json::metadata: the stringified json object
-        return response from the Waston Data API
-        """
-        if metadata == None:
-            raise Exception('The metadata document is required.')
-            
-        method = '/v2/assets?catalog_id=%s'%(self.catalog_id)
-        payloads = metadata
-        response = self.__POST__(method, payloads)
-        return self.__jsonify__(response)
-    
-    def checkout_asset(self, asset_id, type_name='feature_asset'):
-        """
-        @param string::asset_id: the guid of feature asset in catalog
-        return the dumps of feature asset catalog
-        """
-        if asset_id == None:
-            raise Exception('The asset id is required.')
-            
-        data = self.__get_asset_metadata__(asset_id)
-        return data['entity'][type_name]['dumps']
+
 
     """
     "
