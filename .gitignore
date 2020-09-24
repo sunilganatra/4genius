@@ -1,2 +1,5 @@
 tmp_notes/
 local_dev/
+dist/
+build/
+.vscode/
