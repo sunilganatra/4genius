@@ -237,39 +237,6 @@ class AnalyticsEngineClient():
         return self.__jsonify__(json.dumps(response))
     
     def submit_word_count_job(self, instance_display_name=None, instance_id=None ):
-        """
-        This method is can be used to check if you can submit jobs to AE spark instance.
-        @param string::instance_display_name: display name on the AE instance
-        @param int::instance_id: Instance ID on the AE instance
-        returns instance id for the AE instance 
-        """
-        
-        if instance_display_name == None and instance_id ==None:
-            raise Exception("Both instance_display_name and instance_id can't be None")
-            
-        spark_jobs_endpoint = self.get_spark_end_point(instance_display_name, instance_id)
-        spark_jobs_endpoint= spark_jobs_endpoint["spark_jobs_endpoint"].replace(self.host, "")
-        self.job_token = self.__get_jobs_auth_token__(self.token, instance_display_name)
-        headers = {
-            'jwt-auth-user-payload': self.job_token,
-            'cache-control': 'no-cache',
-            'accept': 'application/json',
-            'content-type': 'application/json'
-        }
-        
-        payload = {"engine":{
-                        "type":"spark"
-                            },
-                   "application_arguments":["/opt/ibm/spark/examples/src/main/resources/people.txt"],
-                   "application": "/opt/ibm/spark/examples/src/main/python/wordcount.py"
-                  }
-        payload = json.dumps(payload)
-        print(spark_jobs_endpoint)
-        #self, method, payloads=None, headers=None
-        response = self.__POST__(spark_jobs_endpoint,payloads=payload, headers=headers)
-        return self.__jsonify__(json.dumps(response))
-    
-    def submit_word_count_job2(self, instance_display_name=None, instance_id=None ):
          return self.submit_job(instance_display_name, application_arguments=["/opt/ibm/spark/examples/src/main/resources/people.txt"], application="/opt/ibm/spark/examples/src/main/python/wordcount.py")
     
     def submit_job(self, instance_display_name, instance_id=None, env ={}, volumes=[], size={}, application_arguments = [], application_jar=None, main_class=None, application=None   ):
@@ -297,10 +264,10 @@ class AnalyticsEngineClient():
             payload["engine"]["env"] = env
             
         if volumes != []:
-            payload["volumes"] = volumes
+            payload["engine"]["volumes"] = volumes
         
         if size != {}:
-            payload["size"] = size
+            payload["engine"]["size"] = size
         
         if application_arguments != None:
             payload["application_arguments"] = application_arguments
@@ -320,15 +287,9 @@ class AnalyticsEngineClient():
             'content-type': 'application/json'
         }
         
-#         payload = {"engine":{
-#                         "type":"spark"
-#                             },
-#                    "application_arguments":["/opt/ibm/spark/examples/src/main/resources/people.txt"],
-#                    "application": "/opt/ibm/spark/examples/src/main/python/wordcount.py"
-#                   }
+        
         payload = json.dumps(payload)
-        print(spark_jobs_endpoint)
-        #self, method, payloads=None, headers=None
+        print(payload)
         response = self.__POST__(spark_jobs_endpoint,payloads=payload, headers=headers)
         return self.__jsonify__(json.dumps(response))
     
@@ -497,6 +458,39 @@ class AnalyticsEngineClient():
         response = self.__POST__(method, payloads=payload)
         return self.__jsonify__(json.dumps(response))
     
+    def download_logs(self, instance_display_name, volume_name, job_id):
+        """
+        @param string::volume_name: volume display name
+        @param string::source_file: source complete file path
+        @param string::target_file_name: name of the file to be saved on colume
+        @param string::target_directory: path with directory structure, where file to be saved
+        returns response from API
+        """
+        
+        if volume_name == None:
+            raise Exception("volume display name cannot be empty.")
+        
+        if job_id == None:
+            raise Exception("Job id can not be empty.")
+        
+        if instance_display_name == None:
+            raise Exception("Instance display name can not be empty.")
+            
+        spark_jobs_endpoint = self.get_spark_end_point(instance_display_name)
+        spark_jobs_endpoint= spark_jobs_endpoint["spark_jobs_endpoint"].replace(self.host, "")
+        instance_id = spark_jobs_endpoint.split("/")[-3]
+        method = "/zen-volumes/{}/v1/volumes/files/{}%2F{}%2Flogs%2Fspark-driver-{}-stdout".format(volume_name, instance_id, job_id, job_id)
+        print(self.host)
+        print(method)
+        
+        conn = http.client.HTTPSConnection("cp4d-cpd-cp4d.pathfinder-royalbankofc-73aebe06726e634c608c4167edcc2aeb-0000.tor01.containers.appdomain.cloud")
+        payload = ''
+        headers = {
+          'Authorization': 'Bearer {}'.format(self.token),
+        }
+        response = self.__GET__(method, headers=headers)
+        return self.__jsonify__(json.dumps(response))
+    
     def get_file_from_volume(self, volume_name, source_file , target_file_name, target_directory= None):
         """
         @param string::volume_name: volume display name
@@ -522,9 +516,10 @@ class AnalyticsEngineClient():
             method = "/zen-volumes/{}/v1/volumes/files/{}{}".format(volume_name, target_directory, target_file_name)
         else:
             method = "/zen-volumes/{}/v1/volumes/files/{}".format(volume_name, target_file_name)
-        print(method)
-        response = self.__GET__(method)
-#         print(response.decode("utf-8"))
+        headers = {
+          'Authorization': 'Bearer {}'.format(self.token),
+        }
+        response = self.__GET__(method, headers=headers)
         return self.__jsonify__(json.dumps(response))
     
     def add_file_to_volume(self, volume_name, source_file , target_file_name, target_directory= None):
@@ -686,38 +681,6 @@ class AnalyticsEngineClient():
                 'content-type': 'application/json'
             }
         
-        print("{}/{}".format(self.host, method))
-        conn.request("GET", method, headers=headers)
-        res = conn.getresponse()
-        return res.read().decode("utf-8")
-    
-    def __GET_CUSTOM__(self, url, method, headers=None):
-        """
-        @param string:: method: full API url
-        @param string:: method: the API method
-        @param dict:: header: the http GET request header
-        return the response data
-        """
-        if self.token == None:
-            raise Exception('Authentication token is required.')
-            
-        if method == None:
-            raise Exception('The API method is required.')
-            
-        conn = http.client.HTTPSConnection(
-              url,
-              context = ssl._create_unverified_context()
-        )
-        
-        if headers == None:
-            headers = {
-                'authorization': 'Bearer %s'%(self.token),
-                'cache-control': 'no-cache',
-                'accept': 'application/json',
-                'content-type': 'application/json'
-            }
-        
-        
         conn.request("GET", method, headers=headers)
         res = conn.getresponse()
         return res.read().decode("utf-8")
@@ -779,7 +742,7 @@ class AnalyticsEngineClient():
                 'accept': 'application/json',
                 'content-type': 'application/json'
                 }
-        print("{}/{}".format(self.host, method))
+#         print("{}/{}".format(self.host, method))
         conn.request("POST", method, payloads, headers)
         res = conn.getresponse()
         data = res.read().decode("utf-8")
