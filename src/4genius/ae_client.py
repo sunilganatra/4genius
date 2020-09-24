@@ -4,6 +4,7 @@ import ssl
 import json
 from io import StringIO
 import mimetypes
+import os
 
 """
 "
@@ -25,21 +26,30 @@ class AnalyticsEngineClient():
         """
         if host == None:
             raise Exception('The host url is required.') 
+        else:
+            self.host = host
         
 #         if instance_display_name == None:
 #             raise Exception('Analytics Engine display name is required.') 
 #         else:
 #             self.instance_display_name = instance_display_name
-            
-        if uid == None and pwd==None and token==None:
-            raise Exception('The uid/pwd and authentication token can not be empty at the same time.')
         
-        self.host = host
-        # retrieve auth token
-        if token == None:
+        if token != None:
+            self.token = token
+        elif uid != None and pwd !=None:
             self.__get_auth_token__(uid,pwd)
+        elif os.environ.get('USER_ACCESS_TOKEN', None) != None:
+            self.token = os.environ['USER_ACCESS_TOKEN']
         else:
-            self.token = token   
+            raise Exception('The uid/pwd and authentication token can not be empty at the same time.')
+            
+        
+        
+        # retrieve auth token
+#         if token == None:
+#             self.__get_auth_token__(uid,pwd)
+#         else:
+#             self.token = token   
             
 #         if self.token != None:
 #             self.__get_jobs_auth_token__(self.token, self.instance_display_name)
