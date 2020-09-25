@@ -250,12 +250,42 @@ class AnalyticsEngineClient():
     def submit_word_count_job(self, instance_display_name=None, instance_id=None ):
          return self.submit_job(instance_display_name, application_arguments=["/opt/ibm/spark/examples/src/main/resources/people.txt"], application="/opt/ibm/spark/examples/src/main/python/wordcount.py")
     
-    def submit_job(self, instance_display_name, instance_id=None, env ={}, volumes=[], size={}, application_arguments = [], application_jar=None, main_class=None, application=None   ):
+    def submit_job(self, instance_display_name, instance_id=None, env ={}, volumes=[], size={}, application_arguments = [], application_jar=None, main_class=None, application=None, params_json={}   ):
         """
         This method used to submit jobs to AE instance
         @param string::instance_display_name: display name on the AE instance
         @param int::instance_id: Instance ID on the AE instance
+        @param dict::env: set env params
+                    {
+                         "PYSPARK_PYTHON": "<path>",
+                         "PYTHONPATH": "<path>"
+                     }
+        @param list::volumes: volumes details to be mounted to the instance
+                    [{
+                    "volume_name": "volume anme",
+                    "source_path": "",
+                    "mount_path": "/mount-path"
+                    }]
+        @param dict::size: set executors and drivers size
+                { 
+                  "num_workers": 1, 
+                  "worker_size": { 
+                      "cpu": 1, 
+                      "memory": "4g"
+                  }, 
+                  "driver_size": { 
+                      "cpu": 1, 
+                      "memory": "4g" 
+                  } 
+              }
+        @param list::application_arguments: arguments to be passed into the spark application
+        @param str::application_jar: path of file to be execcuted by spark engine
+        @param str::main_class: main calss module to be used
+            example: org.apache.spark.deploy.SparkSubmit
+        
         returns instance id for the AE instance 
+        @param dict::params_json: all the params can be sent as a json, which will be directly sent in spark submit
+        
         """
         
         if instance_display_name == None and instance_id ==None:
@@ -265,29 +295,33 @@ class AnalyticsEngineClient():
         spark_jobs_endpoint= spark_jobs_endpoint["spark_jobs_endpoint"].replace(self.host, "")
         self.job_token = self.__get_jobs_auth_token__(self.token, instance_display_name)
         type = "spark"
-        payload = {
-            "engine": {
-                "type": "spark"
+        
+        if len(params_json) != 0:
+            payload =params_json
+        else:
+            payload = {
+                "engine": {
+                    "type": "spark"
+                }
             }
-        }
-        
-        if env != {}:
-            payload["engine"]["env"] = env
-            
-        if volumes != []:
-            payload["engine"]["volumes"] = volumes
-        
-        if size != {}:
-            payload["engine"]["size"] = size
-        
-        if application_arguments != None:
-            payload["application_arguments"] = application_arguments
-        if application_jar != None:
-            payload["application_jar"] = application_jar
-        if main_class != None:
-            payload["main_class"] = main_class
-        if application != None:
-            payload["application"] = application
+
+            if env != {}:
+                payload["engine"]["env"] = env
+
+            if volumes != []:
+                payload["engine"]["volumes"] = volumes
+
+            if size != {}:
+                payload["engine"]["size"] = size
+
+            if application_arguments != None:
+                payload["application_arguments"] = application_arguments
+            if application_jar != None:
+                payload["application_jar"] = application_jar
+            if main_class != None:
+                payload["main_class"] = main_class
+            if application != None:
+                payload["application"] = application
         
         
         
