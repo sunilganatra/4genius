@@ -1,5 +1,7 @@
-import http.client
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 
+import http.client
 import ssl
 import json
 from io import StringIO
@@ -76,6 +78,26 @@ class AnalyticsEngineClient():
         method = '/zen-data/v2/serviceInstance?type=volumes'
         response = self.__GET__(method)
         return self.__jsonify__(response)
+
+    def get_volume_status(self, volume_id=None, volume_name=None):
+        """
+        return the status of the volume
+        """
+        if volume_id == None and volume_name == None :
+            raise Exception("Both volume_name and volume_id can't be None, need atleast one.")
+
+        method = '/zen-data/v2/serviceInstance?type=volumes'
+        response = self.__GET__(method)
+        response = json.loads(response)
+        if len(response["requestObj"]) == 0:
+            raise Exception("No volume found")
+        
+        for val in response["requestObj"]:
+            if val["ID"] == volume_id or val["ServiceInstanceDisplayName"] == volume_name:
+                result = {"status": val["ProvisionStatus"]}
+                return result
+        
+        raise Exception("No volume found")
     
     def get_all_storage_class(self):
         """
@@ -228,7 +250,6 @@ class AnalyticsEngineClient():
         
         history_url= self.get_history_server_end_point(instance_display_name, instance_id)
         history_url= history_url["history_server_endpoint"].replace(self.host, "")
-        print(history_url)
         response = self.__POST__(history_url)
         return self.__jsonify__(json.dumps(response))
     
@@ -334,7 +355,6 @@ class AnalyticsEngineClient():
         
         
         payload = json.dumps(payload)
-        print(payload)
         response = self.__POST__(spark_jobs_endpoint,payloads=payload, headers=headers)
         return self.__jsonify__(json.dumps(response))
     
@@ -419,7 +439,6 @@ class AnalyticsEngineClient():
         }
         
         payload = json.dumps(payload)
-        print(payload)
         
         method = '/zen-data/v2/serviceInstance'
         response = self.__POST__(method, payload)
@@ -483,12 +502,70 @@ class AnalyticsEngineClient():
         }
         
         payload = json.dumps(payload)
-        print(payload)
         
         method = '/zen-data/v2/serviceInstance'
         response = self.__POST__(method, payload)
         return self.__jsonify__(json.dumps(response))
+
+    def delete_instance(self, instance_display_name=None, instance_id=None, service_instance_version = "-" ):
+        """
+        @param string::instance_display_name: display name for the volume
+        @param string::instance_id: Volume unique id
+        @param string::service_instance_version: set service instance version. Default : "-"  
+        """
+        
+        service_instance_type = "spark"
+        
+        if instance_display_name == None and instance_id == None:
+            raise Exception("Both instance_display_name and instance_id can't be blank")
+        
+        payload = {
+            "serviceInstanceType": service_instance_type,
+            "serviceInstanceVersion": service_instance_version,
+        }
+        
+        if instance_id:
+            payload["serviceInstanceId"] = instance_id
+        if instance_display_name:
+            payload["serviceInstanceDisplayName"] = instance_display_name
+            
+        payload = json.dumps(payload)
+        print(payload)
+        
+        method = '/zen-data/v2/serviceInstance'
+        response = self.__DELETE__(method, payloads = payload)
+        return self.__jsonify__(json.dumps(response))
     
+    
+    def delete_volume(self, volume_instance_display_name=None, volume_id=None, service_instance_version = "-" ):
+        """
+        @param string::volume_instance_display_name: display name for the volume
+        @param string::volume_id: Volume unique id
+        @param string::service_instance_version: set service instance version. Default : "-"  
+        """
+        
+        service_instance_type = "volumes"
+        
+        if volume_instance_display_name == None and volume_id == None:
+            raise Exception("Both volume_instance_display_name and volume_id can't be blank")
+        
+        payload = {
+            "serviceInstanceType": service_instance_type,
+            "serviceInstanceVersion": service_instance_version,
+        }
+        
+        if volume_id:
+            payload["serviceInstanceId"] = volume_id
+        if volume_instance_display_name:
+            payload["serviceInstanceDisplayName"] = volume_instance_display_name
+            
+        payload = json.dumps(payload)
+        print(payload)
+        
+        method = '/zen-data/v2/serviceInstance'
+        response = self.__DELETE__(method, payloads = payload)
+        return self.__jsonify__(json.dumps(response))
+
     def start_volume(self, volume_name):
         """
         @param string::volume_name: volume display name
@@ -525,8 +602,6 @@ class AnalyticsEngineClient():
         spark_jobs_endpoint= spark_jobs_endpoint["spark_jobs_endpoint"].replace(self.host, "")
         instance_id = spark_jobs_endpoint.split("/")[-3]
         method = "/zen-volumes/{}/v1/volumes/files/{}%2F{}%2Flogs%2Fspark-driver-{}-stdout".format(volume_name, instance_id, job_id, job_id)
-        print(self.host)
-        print(method)
         
         conn = http.client.HTTPSConnection("cp4d-cpd-cp4d.pathfinder-royalbankofc-73aebe06726e634c608c4167edcc2aeb-0000.tor01.containers.appdomain.cloud")
         payload = ''
@@ -618,15 +693,14 @@ class AnalyticsEngineClient():
         conn.request("PUT", method, payload, headers)
         res = conn.getresponse()
         result = res.read()
-        print(result.decode("utf-8"))
         
         try:
             result = json.loads(result)
         except:
-            self.__jsonify__(json.dumps(result))
+            result = self.__jsonify__(json.dumps(result))
             
         if "_messageCode_" in result:
-            if result["_messageCode_"] == "Success":
+            if result["_messageCode_"] == "success":
                 result["file_path"] = method#"/zen-volumes/{}/v1/volumes/files/{}/{}".format(volume_name, target_directory, target_file_name)
             else:
                 self.__jsonify__(json.dumps(result))
@@ -787,7 +861,6 @@ class AnalyticsEngineClient():
                 'accept': 'application/json',
                 'content-type': 'application/json'
                 }
-#         print("{}/{}".format(self.host, method))
         conn.request("POST", method, payloads, headers)
         res = conn.getresponse()
         data = res.read().decode("utf-8")
@@ -856,6 +929,36 @@ class AnalyticsEngineClient():
         res = conn.getresponse()
         data = res.read().decode("utf-8")
         return data
+    
+    def __DELETE__(self, method, headers=None, payloads=None):
+        """
+        @param string:: method: the API method
+        @param dict:: header: the http GET request header
+        return the response data
+        """
+        if self.token == None:
+            raise Exception('Authentication token is required.')
+            
+        if method == None:
+            raise Exception('The API method is required.')
+            
+        conn = http.client.HTTPSConnection(
+              self.host,
+              context = ssl._create_unverified_context()
+        )
+        
+        if headers == None:
+            headers = {
+                'authorization': 'Bearer %s'%(self.token),
+                'cache-control': 'no-cache',
+                'accept': 'application/json',
+                'content-type': 'application/json'
+            }
+        
+        
+        conn.request("DELETE", method, payloads, headers=headers)
+        res = conn.getresponse()
+        return res.read().decode("utf-8")
         
     
     def __jsonify__(self, dumps):
