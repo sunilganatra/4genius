@@ -29,7 +29,7 @@ class CleanCommand(Command):
         os.system('rm -vrf ./build ./dist ./src/*.egg-info ./*.pyc ./*.tgz ./*.egg-info')
 
 setup(
-    name='genius4',
+    name='ibmaemagic',
     version='0.0.1',
     license='BSD 2-Clause License',
     author='Team Jarvis',

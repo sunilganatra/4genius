@@ -2,8 +2,9 @@ import http.client
 import ssl
 import json
 import uuid
+import os
 from io import StringIO
-from genius4.contrib.ibm_object_storage_persistor import IBMObjectStoragePersistor
+from ibmaemagic.contrib.ibm_object_storage_persistor import IBMObjectStoragePersistor
 
 
 """
@@ -17,13 +18,13 @@ from genius4.contrib.ibm_object_storage_persistor import IBMObjectStoragePersist
 """
 
 
-class AnalyticEngineClient():
+class AnalyticMagicClient():
     
     token = None
     uid = None
     pwd = None
     verbose = False
-    session = None
+    session = {}
     cos_client = None
     cos_affix = None
 
@@ -35,6 +36,21 @@ class AnalyticEngineClient():
     """
     def __init__(self):
         pass
+
+    """
+    "
+    " reset the class variables
+    "
+    """
+    @classmethod
+    def reset(cls):
+        cls.token = None
+        cls.uid = None
+        cls.pwd = None
+        cls.verbose = False
+        cls.session = {}
+        cls.cos_client = None
+        cls.cos_affix = None
     
     """
     "
@@ -42,7 +58,7 @@ class AnalyticEngineClient():
     "
     """
     @classmethod
-    def init(cls, host, uid, pwd, verbose=False):
+    def init(cls, host, uid=None, pwd=None, verbose=False):
         """
         @param::host: host url in string
         @param::uid: the user name to access IBM analytic engine
@@ -50,17 +66,21 @@ class AnalyticEngineClient():
         @param::verbose: toggle debug info
         return none
         """
+
         if host == None:
-            raise Exception('> The host url is required.') 
-        if uid == None and pwd==None and token==None:
-            raise Exception('The uid/pwd and authentication token can not be empty at the same time.')
-        
+            raise ValueError('> The host url is required.') 
+
         cls.host = host
-        cls.uid = uid
-        cls.pwd = pwd
         cls.verbose = verbose
-        cls.__get_access_token__()
-      
+        if uid and pwd:
+            cls.uid = uid
+            cls.pwd = pwd
+            cls.__get_access_token__()
+        elif os.environ.get('USER_ACCESS_TOKEN', None) != None:
+            cls.token = os.environ['USER_ACCESS_TOKEN']
+        else:
+             raise ValueError('The uid/pwd can not be empty.')
+
         # debug info
         if cls.verbose:
             print("> Init IBM Analytic Engine successfully.")
@@ -301,10 +321,11 @@ class AnalyticEngineClient():
         @param:: none
         return none
         """
+
         if cls.uid == None or cls.pwd == None:
-            raise Exception('> The username and password are both required.')
+            raise ValueError('> The username and password are both required.')
         if cls.host == None:
-            raise Exception('> The ibm analytic engine host url is required.')
+            raise ValueError('> The ibm analytic engine host url is required.')
             
         conn = http.client.HTTPSConnection(
               cls.host,
@@ -341,7 +362,7 @@ class AnalyticEngineClient():
         """
         
         if cls.token == None:
-            raise Exception('> The Platform access token is required.')
+            raise ValueError('> The Platform access token is required.')
         
 
         payload = json.dumps({"serviceInstanceDisplayname": cls.session['name']})
@@ -439,7 +460,7 @@ class AnalyticEngineClient():
         return data
     
     @classmethod
-    def __PUT__(self, method, payloads=None, headers=None):
+    def __PUT__(cls, method, payloads=None, headers=None):
         """
         @param string:: method: the method API
         @param dict:: payloads: the payload of POST request
@@ -457,7 +478,7 @@ class AnalyticEngineClient():
         
         if headers == None:
             headers = {
-                'authorization': 'Bearer %s'%(self.token),
+                'authorization': 'Bearer %s'%(cls.token),
                 'cache-control': "no-cache",
                 'accept': 'application/json',
                 'content-type': 'application/json'

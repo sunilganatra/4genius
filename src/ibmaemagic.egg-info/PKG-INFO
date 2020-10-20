@@ -1,0 +1,27 @@
+Metadata-Version: 2.1
+Name: ibmaemagic
+Version: 0.0.1
+Summary: Make accessing IBM Analytic Engine easier.
+Home-page:  
+Author: Team Jarvis
+Author-email: dse@ibm.com
+License: BSD 2-Clause License
+Description: package provides function to access IBM Analytic Engine.
+Keywords: pyspark,data science
+Platform: UNKNOWN
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.4
+Classifier: Programming Language :: Python :: 3.5
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: Implementation :: CPython
+Classifier: Programming Language :: Python :: Implementation :: PyPy
+Classifier: Topic :: Utilities
+Requires-Python: >=3.4
+Description-Content-Type: text/markdown
+Provides-Extra: dev
+Provides-Extra: test

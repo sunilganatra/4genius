@@ -1,6 +1,3 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
-
 import http.client
 import ssl
 import json
@@ -10,15 +7,12 @@ import os
 
 """
 "
-" The client interact with Waston Kownledge Catalog using Waston data API(beta)
-" docu: https://cloud.ibm.com/apidocs/watson-data-api#introduction
-" docu: https://developer.ibm.com/api/view/watsondata-prod:watson-data:title-Watson_Data_API#Introduction
-" docu: https://tools.ietf.org/html/rfc6902
+" The client interact with Waston Analytic Engine
 "
 """
 
 
-class AnalyticsEngineClient():
+class AnalyticEngineClient():
     
     def __init__(self, host, uid=None, pwd=None, token=None, verbose=True):
         """
@@ -315,7 +309,10 @@ class AnalyticsEngineClient():
         spark_jobs_endpoint = self.get_spark_end_point(instance_display_name, instance_id)
         spark_jobs_endpoint= spark_jobs_endpoint["spark_jobs_endpoint"].replace(self.host, "")
         self.job_token = self.__get_jobs_auth_token__(self.token, instance_display_name)
-        type = "spark"
+
+        ###
+        # comment out by kai, not used varaible
+        #type = "spark"
         
         if len(params_json) != 0:
             payload =params_json
@@ -426,8 +423,11 @@ class AnalyticsEngineClient():
         if "resources" not in create_arguments:
             create_arguments["resources"] = {}
         
-        if "serviceInstanceDescription" not in create_arguments:
-            create_arguments["serviceInstanceDescription"] = volume_instance_display_name
+        ##
+        # dheerag, please fix problem here, volume_instance_display_name is not definied
+        #
+        # if "serviceInstanceDescription" not in create_arguments:
+        #    create_arguments["serviceInstanceDescription"] = volume_instance_display_name
         
         payload = {
             "createArguments": create_arguments,
@@ -603,8 +603,12 @@ class AnalyticsEngineClient():
         instance_id = spark_jobs_endpoint.split("/")[-3]
         method = "/zen-volumes/{}/v1/volumes/files/{}%2F{}%2Flogs%2Fspark-driver-{}-stdout".format(volume_name, instance_id, job_id, job_id)
         
-        conn = http.client.HTTPSConnection("cp4d-cpd-cp4d.pathfinder-royalbankofc-73aebe06726e634c608c4167edcc2aeb-0000.tor01.containers.appdomain.cloud")
-        payload = ''
+        ###
+        # comment out by kai, not used varaible
+        #
+        # conn = http.client.HTTPSConnection("cp4d-cpd-cp4d.pathfinder-royalbankofc-73aebe06726e634c608c4167edcc2aeb-0000.tor01.containers.appdomain.cloud")
+        # payload = ''
+        
         headers = {
           'Authorization': 'Bearer {}'.format(self.token),
         }
@@ -801,36 +805,6 @@ class AnalyticsEngineClient():
             }
         
         conn.request("GET", method, headers=headers)
-        res = conn.getresponse()
-        return res.read().decode("utf-8")
-    
-    def __DELETE__(self, method, headers=None):
-        """
-        @param string:: method: the API method
-        @param dict:: header: the http GET request header
-        return the response data
-        """
-        if self.token == None:
-            raise Exception('Authentication token is required.')
-            
-        if method == None:
-            raise Exception('The API method is required.')
-            
-        conn = http.client.HTTPSConnection(
-              self.host,
-              context = ssl._create_unverified_context()
-        )
-        
-        if headers == None:
-            headers = {
-                'authorization': 'Bearer %s'%(self.token),
-                'cache-control': 'no-cache',
-                'accept': 'application/json',
-                'content-type': 'application/json'
-            }
-        
-        
-        conn.request("DELETE", method, headers=headers)
         res = conn.getresponse()
         return res.read().decode("utf-8")
     
