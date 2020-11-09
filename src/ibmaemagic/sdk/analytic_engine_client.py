@@ -428,22 +428,24 @@ class AnalyticEngineClient():
         if target_directory == None:
             target_directory = "/my-spark-apps/"
         
+        job_payload = params_json
+        
         app_volume_def = {
             "volume_name": app_volume_name,
             "source_path": target_directory.lstrip('/').rstrip('/'),
             "mount_path": '/'+target_directory.lstrip('/').rstrip('/')
         }
         
-        if "application" not in params_json or "application_jar" not in params_json:
+        if "application" not in job_payload or "application_jar" not in job_payload:
             params_json["application"] = "/{}/{}".format(target_directory.lstrip('/').rstrip('/'),Path(spark_job_filename).name)
         
-        if "engine" not in params_json:
+        if "engine" not in job_payload:
             params_json["engine"] = {}
         
-        if "volumes" not in params_json["engine"]:
-            params_json["engine"]["volumes"] = []
+        if "volumes" not in job_payload["engine"]:
+            job_payload["engine"]["volumes"] = []
         
-        params_json["engine"]["volumes"].append(app_volume_def)
+        job_payload["engine"]["volumes"].append(app_volume_def)
         
         
         self.start_volume(app_volume_name)
@@ -451,7 +453,7 @@ class AnalyticEngineClient():
         response = self.add_file_to_volume(app_volume_name, spark_job_filename, target_file_name, target_directory)
         print(response)
         
-        job_response = self.submit_job(instance_display_name, params_json=params_json)
+        job_response = self.submit_job(instance_display_name, params_json=job_payload)
         print(job_response)
     
     
@@ -640,6 +642,35 @@ class AnalyticEngineClient():
         method = '{}/{}'.format(job_end_point.replace(self.host, ""), job_id)
         response = self.__DELETE__(method)
         return self.__jsonify__(json.dumps(response))
+    
+    def delete_all_finished_spark_job(self, instance_display_name=None, instance_id=None):
+        """
+        @param string::instance_display_name: display name for the volume
+        @param string::instance_id: Volume unique id
+        """
+        
+        if instance_display_name == None and instance_id == None:
+            raise Exception("Both instance_display_name and instance_id can't be None, need atleast one.")
+        
+        job_list = json.loads(self.get_all_jobs(instance_display_name, instance_id))
+        
+        for job in job_list:
+            if job["job_state"] == "FINISHED":
+                self.delete_spark_job(instance_display_name, instance_id, job_id=job["id"])
+            
+    def delete_all_spark_job(self, instance_display_name=None, instance_id=None):
+        """
+        @param string::instance_display_name: display name for the volume
+        @param string::instance_id: Volume unique id
+        """
+        
+        if instance_display_name == None and instance_id == None:
+            raise Exception("Both instance_display_name and instance_id can't be None, need atleast one.")
+        
+        job_list = json.loads(self.get_all_jobs(instance_display_name, instance_id))
+        
+        for job in job_list:
+            self.delete_spark_job(instance_display_name, instance_id, job_id=job["id"])
 
     def delete_instance(self, instance_display_name=None, instance_id=None, service_instance_version = "-" ):
         """
