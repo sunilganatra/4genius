@@ -4,6 +4,7 @@ import json
 from io import StringIO
 import mimetypes
 import os
+from pathlib import Path
 
 """
 "
@@ -153,6 +154,52 @@ class AnalyticEngineClient():
                     return self.__jsonify__(json.dumps(result))
         return self.__jsonify__(json.dumps(result))
     
+    
+    def get_instance_resource_quota(self,instance_display_name=None, instance_id=None):
+        """
+        @param string::instance_display_name: display name on the AE instance
+        @param int::instance_id: Instance ID on the AE instance
+        @param int::cpu_quota: Max CPU can be used by AE instance
+        @param string::memory_quota: Max Memory can be used by AE instance
+        returns Spark jobs end point url
+        """
+        
+        if instance_display_name == None and instance_id ==None:
+            raise Exception("Both instance_display_name and instance_id can't be None, need atleast one.")
+        
+        history_server_ui_end_point = self.get_history_server_ui_end_point(instance_display_name, instance_id)
+        spark_instance_end_point = history_server_ui_end_point['history_server_ui_endpoint'].rstrip('/historyui')
+        spark_instance_end_point = spark_instance_end_point.replace(self.host, "")
+        response = self.__GET__(spark_instance_end_point)
+        return self.__jsonify__(json.dumps(response))
+    
+    
+    def update_instance_resource_quota(self,instance_display_name=None, instance_id=None,cpu_quota=None,memory_quota=None):
+        """
+        @param string::instance_display_name: display name on the AE instance
+        @param int::instance_id: Instance ID on the AE instance
+        @param int::cpu_quota: Max CPU can be used by AE instance
+        @param string::memory_quota: Max Memory can be used by AE instance
+        returns Spark jobs end point url
+        """
+        
+        if instance_display_name == None and instance_id == None:
+            raise Exception("Both instance_display_name and instance_id can't be None, need atleast one.")
+        if cpu_quota == None or memory_quota == None:
+            raise Exception("cpu_quota or memory_quota can't be None, need both.")
+        
+        history_server_ui_end_point = self.get_history_server_ui_end_point(instance_display_name, instance_id)
+        spark_instance_end_point = history_server_ui_end_point['history_server_ui_endpoint'].rstrip('/historyui')
+        resource_quota_end_point = '/{}/resource_quota'.format(spark_instance_end_point.replace(self.host, ""))
+        payload = {
+                "cpu_quota": cpu_quota,
+                "memory_quota":memory_quota
+            }
+        
+        response = self.__PUT__(resource_quota_end_point,payloads=json.dumps(payload))
+        return response
+
+    
     def get_spark_end_point(self, instance_display_name=None, instance_id=None ):
         """
         @param string::instance_display_name: display name on the AE instance
@@ -265,7 +312,7 @@ class AnalyticEngineClient():
     def submit_word_count_job(self, instance_display_name=None, instance_id=None ):
          return self.submit_job(instance_display_name, application_arguments=["/opt/ibm/spark/examples/src/main/resources/people.txt"], application="/opt/ibm/spark/examples/src/main/python/wordcount.py")
     
-    def submit_job(self, instance_display_name, instance_id=None, env ={}, volumes=[], size={}, application_arguments = [], application_jar=None, main_class=None, application=None, params_json={}   ):
+    def submit_job(self, instance_display_name, instance_id=None, env ={}, volumes=[], size={}, conf={}, application_arguments = [], application_jar=None, main_class=None, application=None, params_json={}   ):
         """
         This method used to submit jobs to AE instance
         @param string::instance_display_name: display name on the AE instance
@@ -309,7 +356,7 @@ class AnalyticEngineClient():
         spark_jobs_endpoint = self.get_spark_end_point(instance_display_name, instance_id)
         spark_jobs_endpoint= spark_jobs_endpoint["spark_jobs_endpoint"].replace(self.host, "")
         self.job_token = self.__get_jobs_auth_token__(self.token, instance_display_name)
-
+        
         ###
         # comment out by kai, not used varaible
         #type = "spark"
@@ -331,7 +378,10 @@ class AnalyticEngineClient():
 
             if size != {}:
                 payload["engine"]["size"] = size
-
+                
+            if conf != {}:
+                payload["engine"]["conf"] = conf
+                
             if application_arguments != None:
                 payload["application_arguments"] = application_arguments
             if application_jar != None:
@@ -344,7 +394,7 @@ class AnalyticEngineClient():
         
         
         headers = {
-            'jwt-auth-user-payload': self.job_token,
+            'Authorization' : 'Bearer {}'.format(self.token),
             'cache-control': 'no-cache',
             'accept': 'application/json',
             'content-type': 'application/json'
@@ -354,6 +404,56 @@ class AnalyticEngineClient():
         payload = json.dumps(payload)
         response = self.__POST__(spark_jobs_endpoint,payloads=payload, headers=headers)
         return self.__jsonify__(json.dumps(response))
+    
+    def upload_and_submit_job(self, instance_display_name, app_volume_name, spark_job_filename, params_json={}, instance_id=None, target_directory=None):
+        """
+        @param string::instance_display_name: display name on the AE instance
+        @param string::volume_name: volume display name
+        @param string::source_file: source complete file path
+        @param dict::params_json: spark job submit payload
+        @param int::instance_id: Instance ID on the AE instance
+        @param string::target_directory: path with directory structure, where file to be saved
+        returns instance id for the AE instance 
+        """
+        
+        if instance_display_name == None and instance_id ==None:
+            raise Exception("Both instance_display_name and instance_id can't be None")
+        
+        if app_volume_name == None:
+            raise Exception("app volume name display name can't be None")
+        
+        if spark_job_filename == None:
+            raise Exception("spark_job_filename can't be None")
+        
+        if target_directory == None:
+            target_directory = "/my-spark-apps/"
+        
+        app_volume_def = {
+            "volume_name": app_volume_name,
+            "source_path": target_directory.lstrip('/').rstrip('/'),
+            "mount_path": '/'+target_directory.lstrip('/').rstrip('/')
+        }
+        
+        if "application" not in params_json or "application_jar" not in params_json:
+            params_json["application"] = "/{}/{}".format(target_directory.lstrip('/').rstrip('/'),Path(spark_job_filename).name)
+        
+        if "engine" not in params_json:
+            params_json["engine"] = {}
+        
+        if "volumes" not in params_json["engine"]:
+            params_json["engine"]["volumes"] = []
+        
+        params_json["engine"]["volumes"].append(app_volume_def)
+        
+        
+        self.start_volume(app_volume_name)
+        target_file_name = Path(spark_job_filename).name
+        response = self.add_file_to_volume(app_volume_name, spark_job_filename, target_file_name, target_directory)
+        print(response)
+        
+        job_response = self.submit_job(instance_display_name, params_json=params_json)
+        print(job_response)
+    
     
     def get_all_jobs(self, instance_display_name=None, instance_id=None ):
         """
@@ -505,6 +605,40 @@ class AnalyticEngineClient():
         
         method = '/zen-data/v2/serviceInstance'
         response = self.__POST__(method, payload)
+        return self.__jsonify__(json.dumps(response))
+    
+    def get_spark_job_status(self, instance_display_name=None, instance_id=None, job_id=None):
+        """
+        @param string::instance_display_name: display name for the volume
+        @param string::instance_id: Volume unique id
+        @param string::job_id: spark job id
+        """
+        
+        if instance_display_name == None and instance_id == None:
+            raise Exception("Both instance_display_name and instance_id can't be None, need atleast one.")
+        if job_id == None:
+            raise Exception("job_id can't be None.")
+        
+        job_end_point = self.get_spark_end_point(instance_display_name, instance_id)['spark_jobs_endpoint']
+        method = '{}/{}'.format(job_end_point.replace(self.host, ""), job_id)
+        response = self.__GET__(method)
+        return self.__jsonify__(json.dumps(response))
+    
+    def delete_spark_job(self, instance_display_name=None, instance_id=None, job_id=None):
+        """
+        @param string::instance_display_name: display name for the volume
+        @param string::instance_id: Volume unique id
+        @param string::job_id: spark job id
+        """
+        
+        if instance_display_name == None and instance_id == None:
+            raise Exception("Both instance_display_name and instance_id can't be None, need atleast one.")
+        if job_id == None:
+            raise Exception("job_id can't be None.")
+        
+        job_end_point = self.get_spark_end_point(instance_display_name, instance_id)['spark_jobs_endpoint']
+        method = '{}/{}'.format(job_end_point.replace(self.host, ""), job_id)
+        response = self.__DELETE__(method)
         return self.__jsonify__(json.dumps(response))
 
     def delete_instance(self, instance_display_name=None, instance_id=None, service_instance_version = "-" ):
@@ -665,7 +799,7 @@ class AnalyticEngineClient():
             raise Exception("target_file_name param cannot be empty.")
             
         
-        conn = http.client.HTTPSConnection(self.host)
+        conn = http.client.HTTPSConnection(self.host,context = ssl._create_unverified_context())
         dataList = []
         boundary = 'wL36Yn8afVp8Ag7AmP8qZ0SA4n1v9T'
         dataList.append('--' + boundary)
@@ -687,7 +821,8 @@ class AnalyticEngineClient():
         }
         
         if target_directory != None:
-            target_directory =  target_directory.lstrip("/")#.rstrip("/")
+            target_directory =  target_directory.lstrip("/").rstrip("/")
+            target_directory = target_directory+'/'
             target_directory =  target_directory.split("/")
             target_directory = "%2F".join(target_directory)
             method = "/zen-volumes/{}/v1/volumes/files/{}{}".format(volume_name, target_directory, target_file_name)
