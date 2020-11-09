@@ -640,6 +640,35 @@ class AnalyticEngineClient():
         method = '{}/{}'.format(job_end_point.replace(self.host, ""), job_id)
         response = self.__DELETE__(method)
         return self.__jsonify__(json.dumps(response))
+    
+    def delete_all_finished_spark_job(self, instance_display_name=None, instance_id=None):
+        """
+        @param string::instance_display_name: display name for the volume
+        @param string::instance_id: Volume unique id
+        """
+        
+        if instance_display_name == None and instance_id == None:
+            raise Exception("Both instance_display_name and instance_id can't be None, need atleast one.")
+        
+        job_list = json.loads(self.get_all_jobs(instance_display_name, instance_id))
+        
+        for job in job_list:
+            if job["job_state"] == "FINISHED":
+                self.delete_spark_job(instance_display_name, instance_id, job_id=job["id"])
+            
+    def delete_all_spark_job(self, instance_display_name=None, instance_id=None):
+        """
+        @param string::instance_display_name: display name for the volume
+        @param string::instance_id: Volume unique id
+        """
+        
+        if instance_display_name == None and instance_id == None:
+            raise Exception("Both instance_display_name and instance_id can't be None, need atleast one.")
+        
+        job_list = json.loads(self.get_all_jobs(instance_display_name, instance_id))
+        
+        for job in job_list:
+            self.delete_spark_job(instance_display_name, instance_id, job_id=job["id"])
 
     def delete_instance(self, instance_display_name=None, instance_id=None, service_instance_version = "-" ):
         """
